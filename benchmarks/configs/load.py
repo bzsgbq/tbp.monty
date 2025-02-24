@@ -96,6 +96,7 @@ def select_config(experiment: str) -> dict:
 
         return PRETRAININGS
     elif experiment in ycb_experiment_names:
+        # 文档 Getting Started 中推荐的测试实验 randrot_noise_10distinctobj_surf_agent 是走该分支
         from benchmarks.configs.ycb_experiments import CONFIGS as YCB
 
         return YCB

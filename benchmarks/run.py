@@ -34,6 +34,7 @@ if __name__ == "__main__":
     cmd_parser = create_cmd_parser(experiments=NAMES)
     cmd_args = cmd_parser.parse_args()
     experiments = cmd_args.experiments
+    # experiments = cmd_args.experiments = ['randrot_noise_10distinctobj_surf_agent']
 
     if cmd_args.quiet_habitat_logs:
         os.environ["MAGNUM_LOG"] = "quiet"

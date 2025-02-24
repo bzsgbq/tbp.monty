@@ -188,6 +188,9 @@ class MontyExperiment:
         )
         dataloader_class = config["eval_dataloader_class"]
         dataloader_args = config["eval_dataloader_args"]
+        # print(f"eval_dataloader_class: {dataloader_class}")  # <class 'tbp.monty.frameworks.environments.embodied_data.InformedEnvironmentDataLoader'>
+        # print(f"eval_dataloader_args: {dataloader_args}")  # {'object_names': ['mug', 'bowl', 'potted_meat_can', 'spoon', 'strawberry', 'mustard_bottle', 'dice', 'golf_ball', 'c_lego_duplo', 'banana'], 'object_init_sampler': <tbp.monty.frameworks.config_utils.make_dataset_configs.RandomRotationObjectInitializer object at 0x156b61d30>}
+        # exit()
         self.eval_dataloader = self.create_data_loader(
             dataloader_class, dataloader_args
         )
@@ -217,6 +220,9 @@ class MontyExperiment:
         return dataset
 
     def create_data_loader(self, dataloader_class, dataloader_args):
+        # randrot_noise_10distinctobj_surf_agent:
+        # dataloader_class = <class 'tbp.monty.frameworks.environments.embodied_data.InformedEnvironmentDataLoader'>
+        # dataloader_args  = {'object_names': ['mug', 'bowl', 'potted_meat_can', 'spoon', 'strawberry', 'mustard_bottle', 'dice', 'golf_ball', 'c_lego_duplo', 'banana'], 'object_init_sampler': <tbp.monty.frameworks.config_utils.make_dataset_configs.RandomRotationObjectInitializer object at 0x156b61d30>}
         """Dataloader used to collect data by sampling from dataset.
 
         Args:
@@ -421,6 +427,7 @@ class MontyExperiment:
         self.logger_handler.post_step(self.logger_args)
 
     def run_episode(self):
+        # NOTE: 文档 Getting Started 中推荐的测试实验 randrot_noise_10distinctobj_surf_agent 并执行的 run_episode() 不是这里的 MontyExperiment.run_episode(), 而是 MontyObjectRecognitionExperiment.run_episode()
         """Run one episode until model.is_done."""
         self.pre_episode()
         for step, observation in enumerate(self.dataloader):
@@ -482,6 +489,7 @@ class MontyExperiment:
             for _ in range(num_episodes):
                 self.run_episode()
         elif isinstance(self.dataloader, EnvironmentDataLoaderPerObject):
+            # 文档 Getting Started 中推荐的测试实验 randrot_noise_10distinctobj_surf_agent 是走该分支
             for object_name in self.dataloader.object_names:
                 logging.info(f"Running a simulation to model object: {object_name}")
                 self.run_episode()
@@ -532,6 +540,8 @@ class MontyExperiment:
         # of dataloader number of rotations
         self.logger_handler.pre_eval(self.logger_args)
         self.model.set_experiment_mode("eval")
+        # print(f"Running {self.n_eval_epochs} evaluation epochs")  # self.n_eval_epochs == 10
+        # exit()
         for _ in range(self.n_eval_epochs):
             self.run_epoch()
         self.logger_handler.post_eval(self.logger_args)

@@ -37,6 +37,8 @@ class MontyObjectRecognitionExperiment(MontyExperiment):
     """
 
     def run_episode(self):
+        # 文档 Getting Started 中推荐的测试实验 randrot_noise_10distinctobj_surf_agent 所执行的
+        # run_episode() 是这里的 MontyObjectRecognitionExperiment.run_episode() 方法
         """Episode that checks the terminal states of an object recognition episode."""
         self.pre_episode()
         last_step = self.run_episode_steps()
@@ -80,7 +82,24 @@ class MontyObjectRecognitionExperiment(MontyExperiment):
             The number of total steps taken in the episode.
         """
         for loader_step, observation in enumerate(self.dataloader):
+            # self.show_sensor_output 通过 make_dataset_configs.py 进行配置
             if self.show_sensor_output:
+                # print(type(observation))  # <class 'collections.defaultdict'>
+                # print(observation.keys())  # dict_keys(['agent_id_0'])
+                # print(observation[self.model.motor_system.agent_id].keys())  # dict_keys(['patch', 'view_finder'])
+                # print(observation[self.model.motor_system.agent_id]["view_finder"].keys())  # dict_keys(['rgba', 'depth', 'world_camera', 'sensor_frame_data', 'semantic_3d'])
+                # print(observation[self.model.motor_system.agent_id]["patch"].keys())  # dict_keys(['rgba', 'depth', 'world_camera', 'sensor_frame_data', 'semantic_3d'])
+                # print(observation[self.model.motor_system.agent_id]["view_finder"]["rgba"].shape)  # (64, 64, 4)
+                # print(observation[self.model.motor_system.agent_id]["view_finder"]["depth"].shape)  # (64, 64)
+                # print(observation[self.model.motor_system.agent_id]["view_finder"]["world_camera"].shape)  # (4, 4)
+                # print(observation[self.model.motor_system.agent_id]["view_finder"]["sensor_frame_data"].shape)  # (4096, 4)
+                # print(observation[self.model.motor_system.agent_id]["view_finder"]["semantic_3d"].shape)  # (4096, 4)
+                # print(observation[self.model.motor_system.agent_id]["patch"]["rgba"].shape)  # (64, 64, 4)
+                # print(observation[self.model.motor_system.agent_id]["patch"]["depth"].shape)  # (64, 64)
+                # print(observation[self.model.motor_system.agent_id]["patch"]["world_camera"].shape)  # (4, 4)
+                # print(observation[self.model.motor_system.agent_id]["patch"]["sensor_frame_data"].shape)  # (4096, 4)
+                # print(observation[self.model.motor_system.agent_id]["patch"]["semantic_3d"].shape)  # (4096, 4)
+                # exit()
                 self.show_observations(observation, loader_step)
 
             if self.model.check_reached_max_matching_steps(self.max_steps):
@@ -126,7 +145,7 @@ class MontyObjectRecognitionExperiment(MontyExperiment):
     def show_observations(self, observation, step):
         self.fig.suptitle(
             f"Observation at step {step}"
-            + ("" if step == 0 else f"\n{self.dataloader._action.split('.')[-1]}")
+            + ("" if step == 0 else f"\n{str(self.dataloader._action).split('.')[-1]}")
         )
         self.show_view_finder(observation, step)
         self.show_patch(observation)
