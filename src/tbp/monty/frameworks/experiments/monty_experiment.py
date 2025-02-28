@@ -105,7 +105,9 @@ class MontyExperiment:
         # Create learning modules
         learning_module_configs = monty_config.pop("learning_module_configs")
         learning_modules = {}
+        # ['learning_module_0']
         for lm_id, lm_cfg in learning_module_configs.items():
+            # lm_class = EvidenceGraphLM
             lm_class = lm_cfg["learning_module_class"]
             lm_args = lm_cfg["learning_module_args"]
             assert issubclass(lm_class, LearningModule)
@@ -116,7 +118,9 @@ class MontyExperiment:
         # Create sensor modules
         sensor_module_configs = monty_config.pop("sensor_module_configs")
         sensor_modules = {}
+        # ['sensor_module_0', 'sensor_module_1']
         for sm_id, sm_cfg in sensor_module_configs.items():
+            # sm_class = FeatureChangeSM (sensor_module_0) or DetailedLoggingSM (sensor_module_1)
             sm_class = sm_cfg["sensor_module_class"]
             sm_args = sm_cfg["sensor_module_args"]
             assert issubclass(sm_class, SensorModule)
@@ -140,6 +144,7 @@ class MontyExperiment:
         # Create monty model
         # FIXME: Kept for backward compatibility
         monty_args = monty_config.pop("monty_args", {})
+        # monty_class = tbp.monty.frameworks.models.evidence_matching.MontyForEvidenceGraphMatching
         monty_class = monty_config.pop("monty_class")
         model = monty_class(
             sensor_modules=list(sensor_modules.values()),
@@ -432,7 +437,7 @@ class MontyExperiment:
         self.logger_handler.post_step(self.logger_args)
 
     def run_episode(self):
-        # NOTE: 文档 Getting Started 中推荐的测试实验 randrot_noise_10distinctobj_surf_agent 并执行的 run_episode() 不是这里的 MontyExperiment.run_episode(), 而是 MontyObjectRecognitionExperiment.run_episode()
+        # NOTE: 不会执行该函数! (文档 Getting Started 中推荐的测试实验 randrot_noise_10distinctobj_surf_agent 并执行的 run_episode() 不是这里的 MontyExperiment.run_episode(), 而是 MontyObjectRecognitionExperiment.run_episode() )
         """Run one episode until model.is_done."""
         self.pre_episode()
         for step, observation in enumerate(self.dataloader):
@@ -530,6 +535,8 @@ class MontyExperiment:
 
     def train(self):
         """Run n_train_epochs."""
+        # NOTE: train() 和 evaluate() 的代码逻辑基本一致
+        # 目前 pre_train 和 post_train 什么都没做 (除了记录日志)
         self.logger_handler.pre_train(self.logger_args)
         self.model.set_experiment_mode("train")
         for _ in range(self.n_train_epochs):
@@ -541,6 +548,7 @@ class MontyExperiment:
 
     def evaluate(self):
         """Run n_eval_epochs."""
+        # 目前 pre_eval 和 post_eval 什么都没做 (除了记录日志)
         # TODO: check that number of eval epochs is at least as many as length
         # of dataloader number of rotations
         self.logger_handler.pre_eval(self.logger_args)

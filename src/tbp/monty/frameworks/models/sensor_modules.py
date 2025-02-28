@@ -542,6 +542,7 @@ class HabitatDistantPatchSM(DetailedLoggingSM, NoiseMixin):
             data, on_object_only=self.on_object_obs_only
         )
 
+        # 会进入该分支
         if self.noise_params is not None and observed_state.use_state:
             observed_state = self.add_noise_to_sensor_data(observed_state)
         if self.process_all_obs:

@@ -21,12 +21,19 @@ class Monty(metaclass=abc.ABCMeta):
 
         Used during training or evaluation.
         """
+        # monty_base.py
         self.aggregate_sensory_inputs(observation)
+        # graph_matching.py
         self._step_learning_modules()
+        # graph_matching.py
         self._vote()
+        # monty_base.py
         self._pass_goal_states()
+        # evidence_matching.py
         self._pass_infos_to_motor_system()
+        # graph_matching.py
         self._set_step_type_and_check_if_done()
+        # monty_base.py (pass)
         self._post_step()
 
     def _exploratory_step(self, observation):
@@ -34,10 +41,15 @@ class Monty(metaclass=abc.ABCMeta):
 
         Used only during training.
         """
+        # monty_base.py
         self.aggregate_sensory_inputs(observation)
+        # graph_matching.py
         self._step_learning_modules()
+        # evidence_matching.py
         self._pass_infos_to_motor_system()
+        # graph_matching.py
         self._set_step_type_and_check_if_done()
+        # monty_base.py (pass)
         self._post_step()
 
     @abc.abstractmethod

@@ -149,8 +149,48 @@ class MontyBase(Monty):
         sensor_module_outputs = []
         for sensor_module in self.sensor_modules:
             raw_obs = self.get_observations(observation, sensor_module.sensor_module_id)
+            # raw_obs = dict_keys([
+            #     'rgba',  # (64, 64, 4)
+            #     'depth',  # (64, 64)
+            #     'world_camera',  # (4, 4)
+            #     'sensor_frame_data',  # (4096, 4)
+            #     'semantic_3d'  # (4096, 4)
+            # ])
             sensor_module.update_state(self.get_agent_state())
+            # agent_state = {
+            # 'motor_only_step': False,
+            # 'position': Vector(0.0321267, 1.52669, -0.0579793),
+            # 'rotation': quaternion(0.0127154290676117, 0.934447109699249, -0.124276697635651, 0.3334701359272),
+            # 'sensors': {'patch.depth': {'position': Vector(0, 0, 0),
+            #                             'rotation': quaternion(1, 0, 0, 0)},
+            #             'patch.rgba': {'position': Vector(0, 0, 0),
+            #                             'rotation': quaternion(1, 0, 0, 0)},
+            #             'view_finder.depth': {'position': Vector(0, 0, 0.03),
+            #                                 'rotation': quaternion(1, 0, 0, 0)},
+            #             'view_finder.rgba': {'position': Vector(0, 0, 0.03),
+            #                                 'rotation': quaternion(1, 0, 0, 0)}}}
+            # sensor_module.state = {
+            #     "location": ,
+            #     "rotation": ,
+            # }
             sm_output = sensor_module.step(raw_obs)
+            # Location: [0.   1.5  0.05].
+            # Morphological Features: 
+            #     pose_vectors: 
+            #         [0. 0. 1.]
+            #         [0. 0. 0.]
+            #         [0. 0. 0.]
+            #     pose_fully_defined: False
+            #     on_object: 0.0
+            # Non-Morphological Features: 
+            #     object_coverage: 0.421
+            #     min_depth: 0.048
+            #     mean_depth: 0.048
+            #     hsv: [0.    0.864 0.086]
+            #     pose_fully_defined: False
+            # Confidence: 1.0
+            # Use State: False
+            # Sender Type: SM
             sensor_module_outputs.append(sm_output)
         # Aggregate LM outputs here to be input to higher level LM at next step
         learning_module_outputs = []
@@ -428,6 +468,8 @@ class MontyBase(Monty):
         agent_id = self.sm_to_agent_dict[sensor_module_id]
         agent_obs = observations[agent_id]
         sensor_obs = agent_obs[sensor_module_id]
+        # print(sensor_obs.keys())  # dict_keys(['rgba', 'depth', 'world_camera', 'sensor_frame_data', 'semantic_3d'])
+        # exit()
         return sensor_obs
 
     def get_agent_state(self):
@@ -436,6 +478,17 @@ class MontyBase(Monty):
         Returns:
             State of the agent.
         """
+        # {'motor_only_step': False,
+        # 'position': Vector(0.0321267, 1.52669, -0.0579793),
+        # 'rotation': quaternion(0.0127154290676117, 0.934447109699249, -0.124276697635651, 0.3334701359272),
+        # 'sensors': {'patch.depth': {'position': Vector(0, 0, 0),
+        #                             'rotation': quaternion(1, 0, 0, 0)},
+        #             'patch.rgba': {'position': Vector(0, 0, 0),
+        #                             'rotation': quaternion(1, 0, 0, 0)},
+        #             'view_finder.depth': {'position': Vector(0, 0, 0.03),
+        #                                 'rotation': quaternion(1, 0, 0, 0)},
+        #             'view_finder.rgba': {'position': Vector(0, 0, 0.03),
+        #                                 'rotation': quaternion(1, 0, 0, 0)}}}
         return self.motor_system.get_agent_state()
 
     @property

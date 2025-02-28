@@ -83,6 +83,7 @@ class MontyObjectRecognitionExperiment(MontyExperiment):
         """
         for loader_step, observation in enumerate(self.dataloader):
             # self.show_sensor_output 通过 make_dataset_configs.py 进行配置
+            # 如果开启, 则会展示sensor的感知过程
             if self.show_sensor_output:
                 # print(type(observation))  # <class 'collections.defaultdict'>
                 # print(observation.keys())  # dict_keys(['agent_id_0'])
@@ -122,6 +123,7 @@ class MontyObjectRecognitionExperiment(MontyExperiment):
                 # On these sensations, we just want to pass information to the motor
                 # system, so bypass the main model step (i.e. updating of LMs)
                 self.model.pass_features_directly_to_motor_system(observation)
+            # NOTE: 核心
             else:
                 self.model.step(observation)
 

@@ -44,6 +44,8 @@ def print_config(config):
 
 def run(config):
     exp = config["experiment_class"]()
+    # MontyExperiment.setup_experiment(self, config)
+    # 负责初始化模型和数据集等
     exp.setup_experiment(config)
 
     # TODO: Later will want to evaluate every x episodes or epochs

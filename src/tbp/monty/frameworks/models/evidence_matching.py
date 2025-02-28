@@ -52,6 +52,7 @@ class MontyForEvidenceGraphMatching(MontyForGraphMatching):
 
     Customize voting and union of possible matches.
     """
+    # NOTE: 该方法的 step() 方法会调用 MontyBase 的 step() 方法
 
     def __init__(self, *args, **kwargs):
         """Initialize and reset LM."""
@@ -502,9 +503,18 @@ class EvidenceGraphLM(GraphLM):
         If the evidence for mlh is < object_evidence_threshold,
         interesting_features == False
         """
+        # 1. 获取最可能假设（MLH）：（包含 graph_id, location, rotation, scale, evidence）
         mlh = self.get_current_mlh()
+        # 2. 特征转换：
+        # (1) 姿态特征：将旋转矩阵转换为三个正交向量（姿态特征），表示物体的方向。
         pose_features = self._object_pose_to_features(mlh["rotation"].inv())
+        # (2) 物体ID特征：将物体ID转换为数值特征（目前只是取对象名称中的字符ASCII码的和），用于后续处理。
         object_id_features = self._object_id_to_features(mlh["graph_id"])
+        # 3. 有效性判断：(设置 use_state)
+        # 检查是否满足两个条件：
+        # (1) 当前在物体表面（通过缓冲区buffer判断）。
+        # (2) MLH的证据值超过阈值（object_evidence_threshold）。
+        # 若满足，use_state设为True，否则为False。
         # Pass object ID to next LM if:
         #       1) The last input it received was on_object (+getting SM input
         #           check will make sure that we are also currently on object)
@@ -515,6 +525,8 @@ class EvidenceGraphLM(GraphLM):
             self.buffer.get_currently_on_object()
             and mlh["evidence"] > self.object_evidence_threshold
         )
+        # 4. 置信度计算：
+        # 根据证据值和观察次数计算置信度（confidence），范围限制在[0, 1]。
         # TODO H: is this a good way to scale evidence to [0, 1]?
         confidence = (
             0
@@ -532,6 +544,13 @@ class EvidenceGraphLM(GraphLM):
         # object_loc_rel_body = (
         #     self.buffer.get_current_location(input_channel="first") - mlh["location"]
         # )
+        # 5. 构建状态对象：
+        # 返回一个State对象，包含以下信息：
+        # (1) 位置：传感器相对于身体的当前位置（来自缓冲区）。
+        # (2) 姿态特征：旋转向量及是否完全定义。
+        # (3) 非形态特征：物体ID和相对于模型的位置。
+        # (4) 置信度：处理后的证据值。
+        # (5) 有效性标志（use_state）。
         hypothesized_state = State(
             # Same as input location from patch (rel body)
             # NOTE: Just for common format at the moment, movement information will be
