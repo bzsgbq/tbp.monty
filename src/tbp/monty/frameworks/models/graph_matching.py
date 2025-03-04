@@ -228,23 +228,36 @@ class MontyForGraphMatching(MontyBase):
 
     def _step_learning_modules(self):
         """Collect inputs and step each learning module."""
+        # 1. 遍历所有学习模块
         for i in range(len(self.learning_modules)):
+            # 2. 收集输入数据
+            # (1) 输入来源：通过 _collect_inputs_to_lm 方法从传感器模块或其他LM获取输入数据（如特征、位置、旋转等）。
+            # (2) 数据格式：输入可能是观测对象（Observation）的集合，包含传感器采集的原始数据或高层模块的投票结果。
             sensory_inputs = self._collect_inputs_to_lm(i)
+            # 3. 处理有效输入
             # If LM has any inputs, take a step
             if sensory_inputs is not None:
+                # (1) 设置目标对象：_set_stepwise_targets 根据输入数据中的语义标签（如物体类别），为当前LM设置处理目标（stepwise_target_object）。
                 self._set_stepwise_targets(self.learning_modules[i], sensory_inputs)
 
+                # (2) 日志记录：在匹配步骤（matching_step）中记录输入来源的通道信息，便于调试。
                 if self.step_type == "matching_step":
                     input_channels = [obs.sender_id for obs in sensory_inputs]
                     logging.info(
                         f"Sending input from {input_channels}"
                         f" to {self.learning_modules[i].learning_module_id}"
                     )
+                # 4. 调用学习模块的步骤方法
+                # 动态方法调用：根据 step_type（如 matching_step 或 exploratory_step）选择LM的对应方法。
+                # 如果是匹配步骤：LM执行图匹配算法，更新证据、调整假设空间。
+                # 如果是探索步骤：LM可能扩展模型或收集更多数据。
                 lm_step_method = getattr(self.learning_modules[i], self.step_type)
                 assert callable(lm_step_method), f"{lm_step_method} must be callable"
                 lm_step_method(sensory_inputs)
                 if self.step_type == "matching_step":
                     logging.debug(f"Stepping learning module {i}")
+                # 5. 更新处理状态
+                # (1) 标记处理完成：更新缓冲区统计信息，记录该LM已处理当前步骤的数据。
                 self.learning_modules[i].add_lm_processing_to_buffer_stats(
                     lm_processed=True
                 )
@@ -264,6 +277,7 @@ class MontyForGraphMatching(MontyBase):
                 observations
                 TODO make use of a buffer method to handle the below logging
                 """
+                # (2) 维护目标列表：将当前目标对象追加到 stepwise_targets_list，用于后续分析。
                 self.learning_modules[i].stepwise_targets_list.append(
                     self.learning_modules[i].stepwise_target_object
                 )
