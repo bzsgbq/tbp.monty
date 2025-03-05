@@ -50,6 +50,7 @@ the window just because it isn't being used right now.
 """
 
 
+# 会调用这个类作为
 class BasicGraphMatchingLogger(BaseMontyLogger):
     """Basic logger that logs or saves information when logging is called."""
 
@@ -204,12 +205,60 @@ class BasicGraphMatchingLogger(BaseMontyLogger):
                     stats
         """
         performance_dict = get_stats_per_lm(model, logger_args["target"])
+        # print(f"performance_dict: {performance_dict}")
+        # performance_dict: {
+        #     'LM_0': {
+        #         'primary_performance': 'correct', 
+        #         'stepwise_performance': 'correct', 
+        #         'num_steps': 21, 
+        #         'result': 'mug', 
+        #         'rotation_error': 0.9898, 
+        #         'num_possible_matches': 1, 
+        #         'detected_location': array([ 0.01852114,  1.48921735, -0.01587558]), 
+        #         'detected_rotation': array([ 64.178, 332.747,  47.308]), 
+        #         'detected_scale': 1.0, 
+        #         'location_rel_body': array([ 0.00537752,  1.54249236, -0.01178073]), 
+        #         'detected_path': array([ 0.01852114,  1.48921735, -0.01587558]), 
+        #         'symmetry_evidence': 0, 
+        #         'individual_ts_reached_at_step': 21, 
+        #         'individual_ts_performance': 'correct', 
+        #         'individual_ts_rotation_error': 0.9898, 
+        #         'time': 1.5685770511627197, 
+        #         'mean_objects_per_graph': 1.0, 
+        #         'mean_graphs_per_object': 1.0, 
+        #         'TFNP': 'target_in_possible_matches_(TP)', 
+        #         'possible_match_sources': 'mug', 
+        #         'most_likely_object': 'mug', 
+        #         'most_likely_location': array([ 0.01852114,  1.48921735, -0.01587558]), 
+        #         'most_likely_rotation': array([ 64.1778384 , -27.25349803,  47.30758273]), 
+        #         'highest_evidence': 17.27609576156306, 
+        #         'goal_states_attempted': 3, 
+        #         'goal_state_achieved': 3, 
+        #         'monty_steps': 255, 
+        #         'monty_matching_steps': 21, 
+        #         'primary_target_object': 'mug', 
+        #         'primary_target_position': [0.0, 1.5, 0.0], 
+        #         'primary_target_rotation_euler': array([280.6887601 , 214.86605686, 160.49979103]), 
+        #         'primary_target_rotation_quat': array([ 0.63912594,  0.69154307, -0.31282258,  0.12421052]), 
+        #         'primary_target_scale': 1.0, 
+        #         'stepwise_target_object': 'mug'
+        #     }
+        # }
         target_dict = target_data_to_dict(logger_args["target"])
+        # print(f"target_dict: {target_dict}")
+        # target_dict: {
+        #     'primary_target_object': 'mug', 
+        #     'primary_target_position': [0.0, 1.5, 0.0], 
+        #     'primary_target_rotation_euler': array([280.6887601 , 214.86605686, 160.49979103]), 
+        #     'primary_target_rotation_quat': array([ 0.63912594,  0.69154307, -0.31282258,  0.12421052]), 
+        #     'primary_target_scale': 1.0
+        # }
         if len(self.lms) == 0:  # first time function is called
             for lm in performance_dict.keys():
                 if lm.startswith("LM_"):
                     self.lms.append(lm)
 
+        # train or eval
         mode = model.experiment_mode
         episode = logger_args[f"{mode}_episodes"]
         actions = model.motor_system.action_sequence

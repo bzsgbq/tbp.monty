@@ -37,7 +37,7 @@ from tbp.monty.frameworks.utils.transform_utils import scipy_to_numpy_quat
 class ExperimentArgs:
     do_train: bool = True
     do_eval: bool = True
-    show_sensor_output: bool = True
+    show_sensor_output: bool = False
     max_train_steps: int = 1000
     max_eval_steps: int = 500
     max_total_steps: int = 4 * (max_train_steps + max_eval_steps)  # Total number of

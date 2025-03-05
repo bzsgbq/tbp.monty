@@ -48,6 +48,7 @@ class LoggingCallbackHandler:
     def pre_episode(self, logger_args):
         self.call_event("pre_episode", logger_args)
 
+    # NOTE: 调用的是这个函数
     def post_episode(self, logger_args):
         self.call_event("post_episode", logger_args)
 
