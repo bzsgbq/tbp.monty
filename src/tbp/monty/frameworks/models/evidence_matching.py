@@ -904,6 +904,7 @@ class EvidenceGraphLM(GraphLM):
         ]
         self.channel_hypothesis_mapping[graph_id]["num_hypotheses"] = new_num_hypotheses
 
+    # NOTE: 调用了这个函数
     def _update_possible_matches(self, query):
         """Update evidence for each hypothesis instead of removing them."""
         thread_list = []
@@ -1685,6 +1686,11 @@ class EvidenceGraphLM(GraphLM):
         return all_possible_locations[1:], all_possible_rotations[1:]
 
     def _threshold_possible_matches(self, x_percent_scale_factor=1.0):
+        '''
+        函数 _threshold_possible_matches 的主要功能是基于证据阈值返回可能的匹配项。具体来说，
+        它会根据存储在 graph_memory 中的证据来判断哪些对象可能是匹配的对象。函数的参数 x_percent_scale_factor 
+        可以用来调整阈值的比例，默认值为1.0。
+        '''
         """Return possible matches based on evidence threshold.
 
         Args:
@@ -1699,21 +1705,27 @@ class EvidenceGraphLM(GraphLM):
         Returns:
             The possible matches.
         """
+        # 1. 检查 graph_memory 是否为空：
         if len(self.graph_memory) == 0:
             logging.info("no objects in memory yet.")
             return []
+        # 2. 获取每个图的证据：
         graph_ids, graph_evidences = self.get_evidence_for_each_graph()
+        # 3. 计算图证据的统计量：
         # median_ge = np.median(graph_evidences)
         mean_ge = np.mean(graph_evidences)
         max_ge = np.max(graph_evidences)
         std_ge = np.std(graph_evidences)
 
+        # 4. 根据证据的统计量判断可能的匹配项：
+        # (1) 如果标准差大于0.1或者最大值小于0：
         if (std_ge > 0.1) or (max_ge < 0):
             # If all evidences are below 0, return no possible objects
             # th = max_ge - std_ge if max_ge > 0 else 0
             x_percent_of_max = (
                 max_ge / 100 * self.x_percent_threshold * x_percent_scale_factor
             )
+            # 计算一个基于最大值和比例因子的阈值 th，然后筛选出证据值大于阈值的图ID。
             th = max_ge - x_percent_of_max if max_ge > 0 else 0
             pm = [graph_ids[i] for i, ge in enumerate(graph_evidences) if ge > th]
             logging.debug(f"evidences for each object: {graph_evidences}")
@@ -1721,6 +1733,7 @@ class EvidenceGraphLM(GraphLM):
                 f"mean evidence: {np.round(mean_ge, 3)}, std: {np.round(std_ge, 3)}"
                 f" -> th={th}"
             )
+        # (2) 如果 graph_memory 中只有一个图, 直接返回证据值大于等于0的图ID。
         elif len(self.graph_memory) == 1:
             # Making it a bit more explicit what happens if we only have one graph
             # in memory. In this case we basically recognize the object if the evidence
@@ -1730,6 +1743,7 @@ class EvidenceGraphLM(GraphLM):
             # TODO: Figure out a better way to deal with incomplete and few objects in
             # memory
             pm = [graph_ids[i] for i, ge in enumerate(graph_evidences) if ge >= 0]
+        # (3) 否则，返回所有图ID：
         else:  # objects are about equally likely
             pm = graph_ids
         return pm
@@ -1754,6 +1768,10 @@ class EvidenceGraphLM(GraphLM):
         return mlh_dict
 
     def _calculate_most_likely_hypothesis(self, graph_id=None):
+        '''
+        这个函数 _calculate_most_likely_hypothesis 的作用是返回具有最高证据计数的姿态（pose）。
+        具体来说，它会根据提供的 graph_id 参数来计算最可能的假设（most likely hypothesis, MLH）。
+        '''
         """Return pose with highest evidence count.
 
         Args:
@@ -1767,10 +1785,13 @@ class EvidenceGraphLM(GraphLM):
             mlh_id = np.argmax(self.evidence[graph_id])
             mlh = self._get_mlh_dict_from_id(graph_id, mlh_id)
         else:
+            # 初始化 highest_evidence_so_far 为负无穷大，用于跟踪最高的证据值。
             highest_evidence_so_far = -np.inf
+            # 遍历所有已知对象的 graph_id（通过 get_all_known_object_ids 方法获取）。
             for graph_id in self.get_all_known_object_ids():
                 mlh_id = np.argmax(self.evidence[graph_id])
                 evidence = self.evidence[graph_id][mlh_id]
+                # 如果当前证据值 evidence 大于 highest_evidence_so_far，则更新 mlh 和 highest_evidence_so_far。
                 if evidence > highest_evidence_so_far:
                     mlh = self._get_mlh_dict_from_id(graph_id, mlh_id)
                     highest_evidence_so_far = evidence

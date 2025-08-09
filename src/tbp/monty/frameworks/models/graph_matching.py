@@ -659,6 +659,28 @@ class GraphLM(LearningModule):
 
     def matching_step(self, observations):
         """Update the possible matches given an observation."""
+        # print(observations)
+        # exit()
+        # [State from patch:
+        #    Location: [-0.003  1.493 -0.053].
+        #    Morphological Features: 
+        #        pose_vectors: 
+        #            [-0.681 -0.085  0.728]
+        #            [ 0.356 -0.907  0.227]
+        #            [0.64  0.414 0.647]
+        #        pose_fully_defined: True
+        #        on_object: 1.0
+        #    Non-Morphological Features: 
+        #        object_coverage: 1.0
+        #        min_depth: 0.027
+        #        mean_depth: 0.027
+        #        hsv: [0.    0.949 0.112]
+        #        principal_curvatures: [ -1.991 -15.967]
+        #        principal_curvatures_log: [-1.048 -2.765]
+        #    Confidence: 1.0
+        #    Use State: True
+        #    Sender Type: SM
+        # ]
         buffer_data = self._add_displacements(observations)
         self.buffer.append(buffer_data)
         self.buffer.append_input_states(observations)
@@ -1019,6 +1041,19 @@ class GraphLM(LearningModule):
                 self._select_features_to_use(observations),
                 self.buffer.get_current_displacement(input_channel="all"),
             ]
+        # print(query)
+        # exit()
+        # [{'patch': {
+        #     'pose_vectors': 
+        #         array([ [-0.49330804,  0.31875502,  0.80934691],
+        #                 [ 0.8189285 , -0.14350111,  0.55566495],
+        #                 [ 0.29368684,  0.93683687, -0.1899598 ]]), 
+        #     'pose_fully_defined': True, 
+        #     'hsv': array([0.        , 0.09488429, 0.26004584]), 
+        #     'principal_curvatures_log': array([ 2.8456265 , -4.00136626])
+        #     }
+        # }, 
+        #  None]
 
         logging.debug(f"query: {query}")
 
@@ -1088,6 +1123,26 @@ class GraphLM(LearningModule):
             Features to use.
         """
         features_to_use = dict()
+        # [State from patch:
+        # Location: [-0.01   1.463 -0.027].
+        # Morphological Features: 
+        #     pose_vectors: 
+        #         [-0.213 -0.961 -0.178]
+        #         [ 0.593  0.018 -0.805]
+        #         [ 0.777 -0.277  0.566]
+        #     pose_fully_defined: True
+        #     on_object: 1.0
+        # Non-Morphological Features: 
+        #     object_coverage: 1.0
+        #     min_depth: 0.025
+        #     mean_depth: 0.025
+        #     hsv: [1.    0.964 0.096]
+        #     principal_curvatures: [ -0.13  -57.358]
+        #     principal_curvatures_log: [-0.059 -4.221]
+        # Confidence: 1.0
+        # Use State: True
+        # Sender Type: SM
+        # ]
         for state in states:
             input_channel = state.sender_id
             features_to_use[input_channel] = dict()

@@ -37,6 +37,7 @@ from tbp.monty.frameworks.config_utils.config_args import (
     SurfaceAndViewMontyConfig,
     SurfaceAndViewSOTAMontyConfig,
     get_cube_face_and_corner_views_rotations,
+    DetailedEvidenceLMLoggingConfig
 )
 from tbp.monty.frameworks.config_utils.make_dataset_configs import (
     EnvironmentDataloaderMultiObjectArgs,
@@ -409,6 +410,22 @@ randrot_noise_10simobj_surf_agent.update(
         object_init_sampler=RandomRotationObjectInitializer(),
     ),
 )
+
+# randrot_noise_10simobj_surf_agent.update(
+#     # Changes to make to the randrot_10distinctobj_surf_agent config to follow along:
+#     experiment_args=EvalExperimentArgs(
+#         model_name_or_path=model_path_10simobj,
+#         n_eval_epochs=1, # <--- Setting n_eval_epochs to 1
+#         max_total_steps=5000,
+#     ),
+#     logging_config=DetailedEvidenceLMLoggingConfig(), # <--- Setting the detailed logger
+#     eval_dataloader_args=EnvironmentDataloaderPerObjectArgs(
+#         object_names=get_object_names_by_idx(
+#             2, 3, object_list=SIMILAR_OBJECTS # <--- Only testing one object
+#         ),
+#         object_init_sampler=RandomRotationObjectInitializer(),
+#     ),
+# )
 
 randrot_noise_10simobj_dist_agent = copy.deepcopy(
     randrot_noise_10distinctobj_dist_agent

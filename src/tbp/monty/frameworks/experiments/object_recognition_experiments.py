@@ -18,6 +18,13 @@ import torch
 from tbp.monty.frameworks.environments.embodied_data import SaccadeOnImageDataLoader
 from tbp.monty.frameworks.utils.plot_utils import add_patch_outline_to_view_finder
 
+from tbp.monty.frameworks.config_utils.make_dataset_configs import (
+    get_object_names_by_idx,
+)
+from tbp.monty.frameworks.environments.ycb import (
+    DISTINCT_OBJECTS,
+    SIMILAR_OBJECTS,
+)
 from .monty_experiment import MontyExperiment
 
 # turn interactive plotting off -- call plt.show() to open all figures
@@ -137,7 +144,7 @@ class MontyObjectRecognitionExperiment(MontyExperiment):
 
     def initialize_online_plotting(self):
         self.fig, self.ax = plt.subplots(
-            1, 2, figsize=(9, 6), gridspec_kw={"width_ratios": [1, 0.8]}
+            1, 3, figsize=(18, 5), gridspec_kw={"width_ratios": [1, 0.8, 1]}
         )
         self.fig.subplots_adjust(top=1.1)
         # self.colorbar = self.fig.colorbar(None, fraction=0.046, pad=0.04)
@@ -151,6 +158,7 @@ class MontyObjectRecognitionExperiment(MontyExperiment):
         )
         self.show_view_finder(observation, step)
         self.show_patch(observation)
+        self.show_bar_plot()
         plt.pause(0.00001)
 
     def show_view_finder(self, observation, step, sensor_id="view_finder"):
@@ -204,6 +212,38 @@ class MontyObjectRecognitionExperiment(MontyExperiment):
         )
         # self.colorbar.update_normal(self.depth_image)
 
+    def show_bar_plot(self):
+        # 获取对象名称和证据值
+        object_names = get_object_names_by_idx(0, 10, object_list=SIMILAR_OBJECTS)
+        graph_ids, graph_evidences = self.model.learning_modules[0].get_evidence_for_each_graph()
+        # 确保数据长度一致
+        if len(object_names) != len(graph_evidences):
+            return
+        
+        # 清除之前的柱状图
+        self.ax[2].clear()
+        
+        # 绘制柱状图
+        bars = self.ax[2].bar(object_names, graph_evidences)
+        
+        # 将evidence最大值的柱子标记为绿色, 而evidence值大于该最大值的0.8倍的柱子标记为红色:
+        max_evidence = max(graph_evidences)
+        for bar in bars:
+            if bar.get_height() == max_evidence:
+                bar.set_color("g")
+            elif bar.get_height() > 0.8 * max_evidence:
+                bar.set_color("r")
+        
+        # 设置标签和样式
+        self.ax[2].set_title("Evidence per Object")
+        self.ax[2].set_xlabel("Object Names")
+        self.ax[2].set_ylabel("Evidence Value")
+        self.ax[2].tick_params(axis='x', rotation=45)
+        # self.ax[2].set_ylim(0, 1)  # 固定纵轴范围
+        
+        # 调整布局防止重叠
+        plt.tight_layout()
+    
     def add_text(self, mlh, pos):
         if self.text:
             self.text.remove()
