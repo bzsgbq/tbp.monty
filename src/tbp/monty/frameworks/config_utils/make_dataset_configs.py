@@ -112,7 +112,7 @@ class EnvInitArgsMontyWorldMultiObjectScenes:
 @dataclass
 class OmniglotDatasetArgs:
     env_init_func: Callable = field(default=OmniglotEnvironment)
-    env_init_args: Dict = field(default_factory=lambda: dict())
+    env_init_args: Dict = field(default_factory=lambda: {})
     transform: Union[Callable, list, None] = None
 
     def __post_init__(self):
@@ -143,7 +143,7 @@ class WorldImageDatasetArgs:
 @dataclass
 class WorldImageFromStreamDatasetArgs:
     env_init_func: Callable = field(default=SaccadeOnImageFromStreamEnvironment)
-    env_init_args: Dict = field(default_factory=lambda: dict())
+    env_init_args: Dict = field(default_factory=lambda: {})
     transform: Union[Callable, list, None] = None
 
     def __post_init__(self):
@@ -411,16 +411,13 @@ def get_omniglot_train_dataloader(num_versions, alphabet_ids, data_path=None):
     all_version_idx = []
     for a_idx in alphabet_ids:
         alphabet = alphabet_folders[a_idx]
-        characters_in_a = [
-            c for c in os.listdir(data_path + "images_background/" + alphabet)
-        ]
+        characters_in_a = list(os.listdir(data_path + "images_background/" + alphabet))
         for c_idx, character in enumerate(characters_in_a):
-            versions_of_char = [
-                v
-                for v in os.listdir(
+            versions_of_char = list(
+                os.listdir(
                     data_path + "images_background/" + alphabet + "/" + character
                 )
-            ]
+            )
             for v_idx in range(len(versions_of_char)):
                 if v_idx < num_versions:
                     all_alphabet_idx.append(a_idx)
@@ -466,17 +463,14 @@ def get_omniglot_eval_dataloader(
     all_version_idx = []
     for a_idx in alphabet_ids:
         alphabet = alphabet_folders[a_idx]
-        characters_in_a = [
-            c for c in os.listdir(data_path + "images_background/" + alphabet)
-        ]
+        characters_in_a = list(os.listdir(data_path + "images_background/" + alphabet))
         for c_idx, character in enumerate(characters_in_a):
             if num_versions is None:
-                versions_of_char = [
-                    v
-                    for v in os.listdir(
+                versions_of_char = list(
+                    os.listdir(
                         data_path + "images_background/" + alphabet + "/" + character
                     )
-                ]
+                )
                 num_versions = len(versions_of_char) - start_at_version
 
             for v_idx in range(num_versions + start_at_version):
@@ -777,10 +771,10 @@ def make_sensor_positions_on_grid(
     sensor position 0 (i.e., (0, 0, 0)).
 
     Args:
-        n_sensors (int): Number of sensors. Count should not include a view finder.
-        delta (number): The grid spacing length. By default, sensors will be
+        n_sensors: Number of sensors. Count should not include a view finder.
+        delta: The grid spacing length. By default, sensors will be
             placed every centimeter (units are in meters).
-        order_by (str, optional): How to select points on the grid that will contain
+        order_by: How to select points on the grid that will contain
             sensors.
              - "spiral": sensors are numbered along a counter-clockwise spiral
                 spreading outwards from the center.
@@ -789,16 +783,15 @@ def make_sensor_positions_on_grid(
                 results in sensors generally more packed towards the center.
                 Positions that are equidistant from the center are ordered
                 counterclockwise starting at 3 o'clock.
-        add_view_finder (bool, optional): Whether to include an extra position module
+        add_view_finder: Whether to include an extra position module
             at the origin to serve as a view finder. Defaults to `True`.
 
     Returns:
-        np.ndarray: A 2D array of sensor positions where each row is an array of
-            (x, y, z) positions. If `add_view_finder` is True, the array has
-            `n_sensors + 1` rows, where the last row corresponds to the view finder's
-            position and is identical to row 0. Otherwise, the array has `n_sensors`
-            rows. row 0 is always centered at (0, 0, 0), and all other rows are offset
-            relative to it.
+        A 2D array of sensor positions where each row is an array of (x, y, z)
+        positions. If `add_view_finder` is True, the array has `n_sensors + 1` rows,
+        where the last row corresponds to the view finder's position and is identical to
+        row 0. Otherwise, the array has `n_sensors` rows. row 0 is always centered at
+        (0, 0, 0), and all other rows are offset relative to it.
 
     """
     assert n_sensors > 0, "n_sensors must be greater than 0"
@@ -827,7 +820,7 @@ def make_sensor_positions_on_grid(
             angles = np.arctan2(i_mid - inds[:, 1], inds[:, 0] - i_mid)
             sorting_inds = np.argsort(angles)
             inds = inds[sorting_inds]
-            indices.extend([row for row in inds])
+            indices.extend(list(inds))
 
     elif order_by == "spiral":
         indices = [(i_mid, i_mid)]
@@ -920,8 +913,8 @@ def make_multi_sensor_mount_config(
           except for the view finder (which has a zoom of 1.0)
 
     Returns:
-        dict: A dictionary representing a complete multi-sensor mount config. Arrays
-            are converted to lists.
+        A dictionary representing a complete multi-sensor mount config. Arrays are
+        converted to lists.
 
     """
     assert n_sensors > 0, "n_sensors must be a positive integer"

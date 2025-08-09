@@ -17,6 +17,8 @@ import time
 from tbp.monty.frameworks.config_utils.cmd_parser import create_cmd_parser
 from tbp.monty.frameworks.utils.dataclass_utils import config_to_dict
 
+logger = logging.getLogger(__name__)
+
 
 def merge_args(config, cmd_args=None):
     """Override experiment "config" parameters with command line args.
@@ -43,12 +45,7 @@ def print_config(config):
 
 
 def run(config):
-    exp = config["experiment_class"]()
-    with exp:
-        # MontyExperiment.setup_experiment(self, config)
-        # 负责初始化模型和数据集等
-        exp.setup_experiment(config)
-
+    with config["experiment_class"](config) as exp:
         # TODO: Later will want to evaluate every x episodes or epochs
         # this could probably be solved with just setting the logging freqency
         # Since each trainng loop already does everything that eval does.
@@ -64,7 +61,7 @@ def run(config):
 def main(all_configs, experiments=None):
     """Use this as "main" function when running monty experiments.
 
-    A typical project `run.py` shoud look like this::
+    A typical project `run.py` should look like this::
 
         # Load all experiment configurations from local project
         from experiments import CONFIGS
@@ -105,14 +102,14 @@ def main(all_configs, experiments=None):
         )
         # If we are not running in parallel, this should always be False
         exp_config["logging_config"]["log_parallel_wandb"] = False
+        print_config(exp_config)
 
-        # Print config, including udpates to run name
+        # Print config without running experiment
         if cmd_args is not None:
             if cmd_args.print_config:
-                print_config(exp_config)
                 continue
 
         os.makedirs(exp_config["logging_config"]["output_dir"], exist_ok=True)
         start_time = time.time()
         run(exp_config)
-        logging.info(f"Done running {experiment} in {time.time() - start_time} seconds")
+        logger.info(f"Done running {experiment} in {time.time() - start_time} seconds")

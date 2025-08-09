@@ -12,11 +12,15 @@ import os
 import pathlib
 import pickle
 
+from tbp.monty.frameworks.run_env import setup_env
+
+setup_env()
+
 current_dir = pathlib.Path(__file__).parent
 files = [file for file in os.listdir(current_dir) if file.endswith(".pkl")]
 names = [file.split(".")[0] for file in files]
 
-CONFIGS = dict()
+CONFIGS = {}
 for file, name in zip(files, names):
     with open(os.path.join(current_dir, file), "rb") as f:
         config = pickle.load(f)

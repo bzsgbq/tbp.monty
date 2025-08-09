@@ -16,6 +16,9 @@ description: How to get the code running.
 >
 > If you run into problems, please let us know by [opening a GitHub issue](https://github.com/thousandbrainsproject/tbp.monty/issues/new/choose) or [posting in the Monty Code section of our forum](https://thousandbrains.discourse.group/c/monty-code/6).
 
+> [!WARNING]
+> While the repository contains a `uv.lock` file, this is currently experimental and not supported. In the future this will change, but for now, avoid trying to use `uv` with this project.
+
 # 1. Get the Code
 
 It is best practice (and required if you ever want to contribute code) first to **make a fork of our repository** and then make any changes on your local fork. To do this you can simply [visit our repository](https://github.com/thousandbrainsproject/tbp.monty) and click on the fork button as shown in the picture below. For more detailed instructions see the [GitHub documentation on Forks](https://docs.github.com/en/pull-requests/collaborating-with-pull-requests/working-with-forks/fork-a-repo).
@@ -50,6 +53,9 @@ To setup Monty, **use the conda commands below**. Make sure to `cd` into the `tb
 
 Note that the commands are slightly different depending on whether you are setting up the environment on an Intel or ARM64 architecture, and whether you are using the zsh shell or another shell.
 
+> [!NOTE]
+> On Apple Silicon we rely on Rosetta to run Intel binaries on ARM64 and include the `softwareupdate --install-rosetta` command in the commands below.
+
 You can create the environment with the following commands:
 
 ```shell Intel (zsh shell)
@@ -63,12 +69,14 @@ conda init
 conda activate tbp.monty
 ```
 ```shell ARM64 (Apple Silicon) (zsh shell)
+softwareupdate --install-rosetta
 conda env create -f environment_arm64.yml --subdir=osx-64
 conda init zsh
 conda activate tbp.monty
 conda config --env --set subdir osx-64
 ```
 ```shell ARM64 (Apple Silicon) (other shells)
+softwareupdate --install-rosetta
 conda env create -f environment_arm64.yml --subdir=osx-64
 conda init
 conda activate tbp.monty
@@ -206,3 +214,12 @@ If you want to run an experiment with parallel processing to make use of multipl
 ```shell
 python benchmarks/run_parallel.py -e my_experiment
 ```
+
+# 5. What Next?
+A good next step to get more familiar with our approach and the Monty code base is to go through our [tutorials](./tutorials.md). They include follow-along code and detailed explanations on how Monty experiments are structured, how Monty can be configured in different ways, and what happens when you run a Monty experiment.
+
+If you would like to contribute to the project, you can have a look at the many potential [ways to contribute](../contributing/contributing.md), particularly [ways to contribute code](../contributing/ways-to-contribute-to-code.md).
+
+You can also have a look at the [capabilities of Monty](../overview/vision-of-the-thousand-brains-project/capabilities-of-the-system.md) and our [project roadmap](../future-work/project-roadmap.md) to get an idea of what Monty is currently capable of and what features our team is actively working on.
+
+If you run into any issues or questions, please head over to our [Discourse forum](https://thousandbrains.discourse.group/) or [open an Issue](../contributing/contributing.md#report-an-issue). We are always happy to help!

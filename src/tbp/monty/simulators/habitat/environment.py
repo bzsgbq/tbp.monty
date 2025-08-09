@@ -36,6 +36,7 @@ __all__ = [
     "SingleSensorAgentArgs",
 ]
 
+from tbp.monty.simulators.simulator import Simulator
 
 # Create agent and object configuration helper dataclasses
 
@@ -108,16 +109,15 @@ class HabitatEnvironment(EmbodiedEnvironment):
         super().__init__()
         self._agents = []
         for config in agents:
-            if is_dataclass(config):
-                config = asdict(config)
-            agent_type = config["agent_type"]
-            args = config["agent_args"]
+            cfg_dict = asdict(config) if is_dataclass(config) else config
+            agent_type = cfg_dict["agent_type"]
+            args = cfg_dict["agent_args"]
             if is_dataclass(args):
                 args = asdict(args)
             agent = agent_type(**args)
             self._agents.append(agent)
 
-        self._env = HabitatSim(
+        self._env: Simulator = HabitatSim(
             agents=self._agents,
             scene_id=scene_id,
             seed=seed,
@@ -126,9 +126,8 @@ class HabitatEnvironment(EmbodiedEnvironment):
 
         if objects is not None:
             for obj in objects:
-                if is_dataclass(obj):
-                    obj = asdict(obj)
-                self._env.add_object(**obj)
+                obj_dict = asdict(obj) if is_dataclass(obj) else obj
+                self._env.add_object(**obj_dict)
 
     @property
     def action_space(self):
@@ -141,7 +140,7 @@ class HabitatEnvironment(EmbodiedEnvironment):
         rotation: QuaternionWXYZ = (1.0, 0.0, 0.0, 0.0),
         scale: VectorXYZ = (1.0, 1.0, 1.0),
         semantic_id: Optional[str] = None,
-        enable_physics: Optional[bool] = False,
+        enable_physics=False,
         object_to_avoid=False,
         primary_target_object=None,
     ):

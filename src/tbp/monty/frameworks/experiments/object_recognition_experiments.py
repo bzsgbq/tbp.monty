@@ -30,6 +30,8 @@ from .monty_experiment import MontyExperiment
 # turn interactive plotting off -- call plt.show() to open all figures
 plt.ioff()
 
+logger = logging.getLogger(__name__)
+
 
 class MontyObjectRecognitionExperiment(MontyExperiment):
     """Experiment customized for object-pose recognition with a single object.
@@ -70,7 +72,7 @@ class MontyObjectRecognitionExperiment(MontyExperiment):
         self.dataloader.pre_episode()
 
         self.max_steps = self.max_train_steps
-        if not self.model.experiment_mode == "train":
+        if self.model.experiment_mode != "train":
             self.max_steps = self.max_eval_steps
 
         self.logger_handler.pre_episode(self.logger_args)
@@ -111,7 +113,7 @@ class MontyObjectRecognitionExperiment(MontyExperiment):
                 self.show_observations(observation, loader_step)
 
             if self.model.check_reached_max_matching_steps(self.max_steps):
-                logging.info(
+                logger.info(
                     f"Terminated due to maximum matching steps : {self.max_steps}"
                 )
                 # Need to break here already, otherwise there are problems
@@ -119,12 +121,12 @@ class MontyObjectRecognitionExperiment(MontyExperiment):
                 return loader_step
 
             if loader_step >= (self.max_total_steps):
-                logging.info(f"Terminated due to maximum episode steps : {loader_step}")
+                logger.info(f"Terminated due to maximum episode steps : {loader_step}")
                 self.model.deal_with_time_out()
                 return loader_step
 
             if self.model.is_motor_only_step:
-                logging.debug(
+                logger.debug(
                     "Performing a motor-only step, so passing info straight to motor"
                 )
                 # On these sensations, we just want to pass information to the motor
@@ -151,10 +153,10 @@ class MontyObjectRecognitionExperiment(MontyExperiment):
         self.setup_camera_ax()
         self.setup_sensor_ax()
 
-    def show_observations(self, observation, step):
+    def show_observations(self, observation, step: int) -> None:
         self.fig.suptitle(
             f"Observation at step {step}"
-            + ("" if step == 0 else f"\n{str(self.dataloader._action).split('.')[-1]}")
+            + ("" if step == 0 else f"\n{self.dataloader._action.name}")
         )
         self.show_view_finder(observation, step)
         self.show_patch(observation)
@@ -165,13 +167,13 @@ class MontyObjectRecognitionExperiment(MontyExperiment):
         if self.camera_image:
             self.camera_image.remove()
 
-        view_finder_image = observation[self.model.motor_system.agent_id][sensor_id][
-            "rgba"
-        ]
+        view_finder_image = observation[self.model.motor_system._policy.agent_id][
+            sensor_id
+        ]["rgba"]
         if isinstance(self.dataloader, SaccadeOnImageDataLoader):
             center_pixel_id = np.array([200, 200])
             patch_size = np.array(
-                observation[self.model.motor_system.agent_id]["patch"]["depth"]
+                observation[self.model.motor_system._policy.agent_id]["patch"]["depth"]
             ).shape[0]
             raw_obs = self.model.sensor_modules[0].raw_observations
             if len(raw_obs) > 0:
@@ -187,9 +189,9 @@ class MontyObjectRecognitionExperiment(MontyExperiment):
             )
             # Show a square in the middle as a rough estimate of where the patch is
             if step == 0:
-                image_shape = observation[self.model.motor_system.agent_id][sensor_id][
-                    "rgba"
-                ].shape
+                image_shape = observation[self.model.motor_system._policy.agent_id][
+                    sensor_id
+                ]["rgba"].shape
                 square = plt.Rectangle(
                     (image_shape[1] * 4.5 // 10, image_shape[0] * 4.5 // 10),
                     image_shape[1] / 10,
@@ -207,7 +209,7 @@ class MontyObjectRecognitionExperiment(MontyExperiment):
         if self.depth_image:
             self.depth_image.remove()
         self.depth_image = self.ax[1].imshow(
-            observation[self.model.motor_system.agent_id][sensor_id]["depth"],
+            observation[self.model.motor_system._policy.agent_id][sensor_id]["depth"],
             cmap="viridis_r",
         )
         # self.colorbar.update_normal(self.depth_image)
@@ -251,7 +253,7 @@ class MontyObjectRecognitionExperiment(MontyExperiment):
         mlh_id = mlh["graph_id"].split("_")
         for word in mlh_id:
             new_text += r"$\bf{" + word + "}$ "
-        new_text += f"with evidence {np.round(mlh['evidence'],2)}\n\n"
+        new_text += f"with evidence {np.round(mlh['evidence'], 2)}\n\n"
         pms = self.model.learning_modules[0].get_possible_matches()
         graph_ids, evidences = self.model.learning_modules[
             0
@@ -264,12 +266,12 @@ class MontyObjectRecognitionExperiment(MontyExperiment):
             new_text += "2nd MLH: "
             for word in second_id:
                 new_text += r"$\bf{" + word + "}$ "
-            new_text += f"with evidence {np.round(evidences[top_indices[1]],2)}\n\n"
+            new_text += f"with evidence {np.round(evidences[top_indices[1]], 2)}\n\n"
 
         new_text += r"$\bf{Possible}$ $\bf{matches:}$"
         for gid, ev in zip(graph_ids, evidences):
             if gid in pms:
-                new_text += f"\n{gid}: {np.round(ev,1)}"
+                new_text += f"\n{gid}: {np.round(ev, 1)}"
 
         self.text = self.ax[0].text(0, pos + 30, new_text, va="top")
 

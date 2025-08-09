@@ -11,11 +11,13 @@ from __future__ import annotations
 
 from dataclasses import fields
 
+from benchmarks.configs.follow_ups.names import NAMES as FOLLOW_UP_NAMES
 from benchmarks.configs.names import (
     MontyWorldExperiments,
     MontyWorldHabitatExperiments,
     MyExperiments,
     PretrainingExperiments,
+    UnsupervisedInferenceExperiments,
     YcbExperiments,
 )
 
@@ -31,7 +33,7 @@ def load_configs(experiments: list[str]) -> dict:
     Returns:
         The imported configuration groups for the given experiments.
     """
-    configs = dict()
+    configs = {}
 
     for experiment in experiments:
         configs.update(select_config(experiment))
@@ -75,12 +77,13 @@ def select_config(experiment: str) -> dict:
         field.name for field in fields(PretrainingExperiments)
     ]
     ycb_experiment_names = [field.name for field in fields(YcbExperiments)]
+    unsupervised_inference_experiment_names = [
+        field.name for field in fields(UnsupervisedInferenceExperiments)
+    ]
     my_experiment_names = [field.name for field in fields(MyExperiments)]
 
     if experiment in monty_world_experiment_names:
-        from benchmarks.configs.monty_world_experiments import (
-            CONFIGS as MONTY_WORLD,
-        )
+        from benchmarks.configs.monty_world_experiments import CONFIGS as MONTY_WORLD
 
         return MONTY_WORLD
     elif experiment in monty_world_habitat_experiment_names:
@@ -90,9 +93,7 @@ def select_config(experiment: str) -> dict:
 
         return MONTY_WORLD_HABITAT
     elif experiment in pretraining_experiment_names:
-        from benchmarks.configs.pretraining_experiments import (
-            CONFIGS as PRETRAININGS,
-        )
+        from benchmarks.configs.pretraining_experiments import CONFIGS as PRETRAININGS
 
         return PRETRAININGS
     elif experiment in ycb_experiment_names:
@@ -100,7 +101,18 @@ def select_config(experiment: str) -> dict:
         from benchmarks.configs.ycb_experiments import CONFIGS as YCB
 
         return YCB
+    elif experiment in unsupervised_inference_experiment_names:
+        from benchmarks.configs.unsupervised_inference_experiments import (
+            CONFIGS as UNSUPERVISED_INFERENCE,
+        )
+
+        return UNSUPERVISED_INFERENCE
     elif experiment in my_experiment_names:
         from benchmarks.configs.my_experiments import CONFIGS as MY_EXPERIMENTS
 
         return MY_EXPERIMENTS
+
+    elif experiment in FOLLOW_UP_NAMES:
+        from benchmarks.configs.follow_ups import CONFIGS as FOLLOW_UP_EXPERIMENTS
+
+        return FOLLOW_UP_EXPERIMENTS

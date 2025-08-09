@@ -227,8 +227,8 @@ def check_external(folder, ignore_dirs, rdme):
                 total_links_checked += links_checked
                 if file_errors:
                     errors[file_path] = file_errors
-            except Exception as exc:
-                logging.error(f"{RED}Error processing {file_path}: {exc}{RESET}")
+            except Exception:
+                logging.exception(f"{RED}Error processing {file_path}: {RESET}")
 
     report_errors(errors, total_links_checked)
 
@@ -303,7 +303,7 @@ def check_readme_link(url, rdme):
         logging.info(log_msg)
         if not response:
             return [f"  broken link: {url} (Not found)"]
-    except Exception as e:
+    except Exception as e:  # noqa: BLE001
         return [f"  {url}: {str(e)}"]
 
     return []
@@ -332,7 +332,7 @@ def check_external_link(url):
     return []
 
 
-def check_url(url):
+def check_url(url) -> requests.Response:
     """Check if the URL exists.
 
     The cache-control was just in-case.
@@ -342,7 +342,7 @@ def check_url(url):
     was a bit more future proof.
 
     Returns:
-        requests.Response: The response from the URL request.
+        The response from the URL request.
     """
     headers = request_headers()
 
@@ -359,7 +359,7 @@ def check_url(url):
     return response
 
 
-def request_headers():
+def request_headers() -> dict:
     """Populate the headers for the request.
 
     The cache-control was just in-case.
@@ -369,7 +369,7 @@ def request_headers():
     was a bit more future proof.
 
     Returns:
-        dict: A dictionary containing the request headers.
+        A dictionary containing the request headers.
     """
     return {
         "User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) "

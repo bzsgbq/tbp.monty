@@ -15,6 +15,7 @@ import logging
 import os
 import re
 from collections import OrderedDict
+from copy import deepcopy
 from typing import Any, List, Tuple
 from urllib.parse import parse_qs
 
@@ -82,7 +83,7 @@ class ReadMe:
         response = get(f"{PREFIX}/docs/{slug}", {"x-readme-version": self.version})
 
         if not response:
-            raise Exception(f"Failed to fetch document: {response}")
+            raise DocumentNotFound(f"Document {slug} not found")
 
         front_matter = OrderedDict()
         front_matter["title"] = response.get("title")
@@ -95,10 +96,14 @@ class ReadMe:
 
         front_matter_str = (
             f"---\n"
-            f"""{yaml.dump(front_matter,
-                           Dumper=OrderedDumper,
-                           default_flow_style=False,
-                           width=float('inf')).strip()}\n"""
+            f"""{
+                yaml.dump(
+                    front_matter,
+                    Dumper=OrderedDumper,
+                    default_flow_style=False,
+                    width=float("inf"),
+                ).strip()
+            }\n"""
             f"---\n"
         )
 
@@ -190,7 +195,7 @@ class ReadMe:
             file_path: The path to the current document being processed
 
         Returns:
-            str: The document body with CSV tables converted to HTML format
+            The document body with CSV tables converted to HTML format.
         """
 
         def replace_match(match):
@@ -214,10 +219,10 @@ class ReadMe:
 
                     # Process headers and build alignment lookup
                     alignments = {}
-                    for i, header in enumerate(headers):
+                    for i, unparsed_header in enumerate(headers):
                         title_attr = ""
                         align_style = ""
-                        parts = [p.strip() for p in header.split("|")]
+                        parts = [p.strip() for p in unparsed_header.split("|")]
                         header = parts[0]
 
                         # Process additional attributes in any order
@@ -254,7 +259,7 @@ class ReadMe:
                         },
                     )
 
-            except Exception as e:
+            except Exception as e:  # noqa: BLE001
                 return f"[Failed to load table from {csv_path} - {e}]"
 
         return REGEX_CSV_TABLE.sub(replace_match, body)
@@ -262,23 +267,21 @@ class ReadMe:
     def create_or_update_doc(
         self, order: int, category_id: str, doc: dict, parent_id: str, file_path: str
     ) -> Tuple[str, bool]:
-        body = self.insert_markdown_snippet(doc["body"], file_path)
-        body = self.convert_csv_to_html_table(body, file_path)
-        body = self.correct_image_locations(body)
-        body = self.correct_file_locations(body)
-        body = self.convert_note_tags(body)
-        body = self.parse_images(body)
-        body = self.convert_cloudinary_videos(body)
+        markdown = self.process_markdown(doc["body"], file_path, doc["slug"])
 
         create_doc_request = {
             "title": doc["title"],
             "type": "basic",
-            "body": body,
+            "body": markdown,
             "category": category_id,
             "hidden": doc.get("hidden", False),
             "order": order,
             "parentDoc": parent_id,
         }
+
+        # Include description field as excerpt if it exists in the document
+        if "description" in doc:
+            create_doc_request["excerpt"] = doc["description"]
 
         doc_id = self.get_doc_id(doc["slug"])
         created = doc_id is None
@@ -298,6 +301,52 @@ class ReadMe:
             doc_id = json.loads(response)["_id"]
 
         return doc_id, created
+
+    def process_markdown(self, body: str, file_path: str, slug: str) -> str:
+        body = self.insert_edit_this_page(body, slug, file_path)
+        body = self.insert_markdown_snippet(body, file_path)
+        body = self.convert_csv_to_html_table(body, file_path)
+        body = self.correct_image_locations(body)
+        body = self.correct_file_locations(body)
+        body = self.convert_note_tags(body)
+        body = self.parse_images(body)
+        body = self.convert_cloudinary_videos(body)
+        return body
+
+    def sanitize_html(self, body: str) -> str:
+        allowed_attributes = deepcopy(nh3.ALLOWED_ATTRIBUTES)
+        allowed_tags = deepcopy(nh3.ALLOWED_TAGS)
+
+        allowed_tags.add("style")
+        allowed_tags.add("a")
+        allowed_tags.add("label")
+        for tag in allowed_attributes:
+            allowed_attributes[tag].add("width")
+            allowed_attributes[tag].add("style")
+            allowed_attributes[tag].add("target")
+            allowed_attributes[tag].add("class")
+
+        return nh3.clean(
+            body,
+            tags=allowed_tags,
+            attributes=allowed_attributes,
+            link_rel=None,
+            strip_comments=False,
+            generic_attribute_prefixes={"data-"},
+            clean_content_tags={"script"},
+        )
+
+    def insert_edit_this_page(self, body: str, filename: str, file_path: str) -> str:
+        depth = len(file_path.split("/")) - 1
+        relative_path = "../" * depth
+        relative_path = relative_path + "snippets/edit-this-page.md"
+        body = body + f"\n\n!snippet[{relative_path}]"
+        body = self.insert_markdown_snippet(body, file_path)
+        body = body.replace(
+            "!!LINK!!",
+            f"https://github.com/thousandbrainsproject/tbp.monty/edit/main/{file_path}/{filename}.md",
+        )
+        return body
 
     def correct_image_locations(self, body: str) -> str:
         repo = os.getenv("IMAGE_PATH")
@@ -430,7 +479,7 @@ class ReadMe:
                     f'style="border-radius: 10px;" controls '
                     f'poster="{new_url.replace(".mp4", ".jpg")}">'
                     f'<source src="{new_url}" type="video/mp4">'
-                    f'Your browser does not support the video tag.</video></div>'
+                    f"Your browser does not support the video tag.</video></div>"
                 )
             }
             return f"[block:html]\n{json.dumps(block, indent=2)}\n[/block]"
@@ -445,7 +494,7 @@ class ReadMe:
             file_path: The path to the current document being processed
 
         Returns:
-            str: The document body with snippets inserted
+            The document body with snippets inserted.
         """
 
         def replace_match(match):
@@ -454,8 +503,16 @@ class ReadMe:
 
             try:
                 with open(snippet_path, "r") as f:
-                    return f.read()
-            except Exception as e:
+                    unsafe_content = f.read()
+                    return self.sanitize_html(unsafe_content)
+
+            except Exception:  # noqa: BLE001
                 return f"[File not found or could not be read: {snippet_path}]"
 
         return regex_markdown_snippet.sub(replace_match, body)
+
+
+class DocumentNotFound(RuntimeError):
+    """Raised when a document is not found."""
+
+    pass

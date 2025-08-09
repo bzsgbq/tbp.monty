@@ -14,10 +14,11 @@ from typing import Any, Dict, Optional, Tuple
 
 from tbp.monty.frameworks.actions.actions import Action
 
-__all__ = ["EmbodiedEnvironment", "ActionSpace"]
+__all__ = ["EmbodiedEnvironment", "ActionSpace", "VectorXYZ", "QuaternionWXYZ"]
 
 VectorXYZ = Tuple[float, float, float]
 QuaternionWXYZ = Tuple[float, float, float, float]
+
 
 class ActionSpace(collections.abc.Container):
     """Represents the environment action space."""
